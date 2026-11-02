@@ -237,7 +237,9 @@ static gguf_context_ptr get_gguf_ctx(const llm_arch arch, const bool moe) {
     uint32_t n_head  = 2;
     uint32_t n_ff    = 384;
     uint32_t n_layer = 2;
-    if (arch == LLM_ARCH_LLAMA4) {
+    if (arch == LLM_ARCH_KOI) {
+        n_layer = 5;
+    } else if (arch == LLM_ARCH_LLAMA4) {
         n_layer = 4; // hparams.n_no_rope_layer_step is hard-coded to 4
     } else if (arch == LLM_ARCH_MAION_CODER) {
         n_head = 4;
@@ -711,6 +713,23 @@ static gguf_context_ptr get_gguf_ctx(const llm_arch arch, const bool moe) {
     ms.add_kv(LLM_KV_ACTIVATION_SITU_BETA,        4.0f);
     ms.add_kv(LLM_KV_ACTIVATION_SITU_LINEAR_BETA, 25.0f);
     ms.add_kv(LLM_KV_KDA_GATE_LOWER_BOUND,        -5.0f);
+
+    if (arch == LLM_ARCH_KOI) {
+        ms.add_kv(LLM_KV_INPUT_LAYER_COUNT, uint32_t(1));
+        ms.add_kv(LLM_KV_RECURRENT_LAYER_COUNT, uint32_t(3));
+        ms.add_kv(LLM_KV_OUTPUT_LAYER_COUNT, uint32_t(1));
+        ms.add_kv(LLM_KV_NUM_LOOPS, uint32_t(2));
+        ms.add_kv(LLM_KV_LAYER_PATTERN, "MM*--");
+        ms.add_kv(LLM_KV_RECURRENT_KV_CACHE_MODE, "per_loop");
+        ms.add_kv(LLM_KV_LOOP_CONDITIONING_HIDDEN_SIZE, uint32_t(16));
+        ms.add_kv(LLM_KV_LOOP_CONDITIONING_MAX_LOOPS, uint32_t(4));
+        ms.add_kv(LLM_KV_LOOP_ADAPTER_RANK, uint32_t(8));
+        ms.add_kv(LLM_KV_LOOP_INPUT_MIXING, true);
+        ms.add_kv(LLM_KV_SSM_INNER_SIZE, uint32_t(256));
+        ms.add_kv(LLM_KV_SSM_STATE_SIZE, uint32_t(64));
+        ms.add_kv(LLM_KV_SSM_TIME_STEP_RANK, uint32_t(8));
+        ms.add_kv(LLM_KV_SSM_HOUSEHOLDER_COUNT, uint32_t(3));
+    }
 
     for (uint32_t il = 0; il < n_layer; il++) {
         ggml_tensor t;

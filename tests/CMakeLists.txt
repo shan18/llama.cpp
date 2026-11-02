@@ -355,6 +355,9 @@ llama_build(test-backend-ops.cpp LINK ggml)
 
 llama_build_and_test(test-backend-tensor.cpp LINK ggml)
 
+llama_build_and_test(test-backend-sched.cpp LABEL "main behavior backend" LINK ggml)
+set_tests_properties(test-backend-sched PROPERTIES SKIP_RETURN_CODE 77)
+
 llama_build_and_test(test-tiled-mulmat.cpp  LABEL "main behavior backend"  LINK ggml)
 llama_build_and_test(test-model-load-cancel.cpp LABEL "model behavior")
 llama_build_and_test(test-autorelease.cpp       LABEL "model behavior")

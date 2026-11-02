@@ -106,6 +106,15 @@ class Keys:
         LANGUAGES                  = "general.languages"
 
     class LLM:
+        INPUT_LAYER_COUNT                 = "{arch}.input_layer_count"
+        RECURRENT_LAYER_COUNT             = "{arch}.recurrent_layer_count"
+        OUTPUT_LAYER_COUNT                = "{arch}.output_layer_count"
+        LAYER_PATTERN                     = "{arch}.layer_pattern"
+        RECURRENT_KV_CACHE_MODE           = "{arch}.recurrent_kv_cache_mode"
+        LOOP_CONDITIONING_HIDDEN_SIZE     = "{arch}.loop_conditioning.hidden_size"
+        LOOP_CONDITIONING_MAX_LOOPS       = "{arch}.loop_conditioning.max_loops"
+        LOOP_ADAPTER_RANK                 = "{arch}.loop_adapter_rank"
+        LOOP_INPUT_MIXING                 = "{arch}.loop_input_mixing"
         VOCAB_SIZE                        = "{arch}.vocab_size"
         CONTEXT_LENGTH                    = "{arch}.context_length"
         EMBEDDING_LENGTH                  = "{arch}.embedding_length"
@@ -316,6 +325,7 @@ class Keys:
         PREFIX_LM        = "{arch}.hrm.prefix_lm"
 
     class SSM:
+        HOUSEHOLDER_COUNT = "{arch}.ssm.householder_count"
         CONV_KERNEL    = "{arch}.ssm.conv_kernel"
         INNER_SIZE     = "{arch}.ssm.inner_size"
         STATE_SIZE     = "{arch}.ssm.state_size"
@@ -741,6 +751,7 @@ class MODEL_ARCH(IntEnum):
     K2HORIZON        = auto()
     KOLIBRI1         = auto()
     LIMITE           = auto()
+    KOI              = auto()
 
 
 class VISION_PROJECTOR_TYPE(IntEnum):
@@ -759,6 +770,22 @@ class VISION_PROJECTOR_TYPE(IntEnum):
 
 
 class MODEL_TENSOR(IntEnum):
+    LOOP_COND_UP            = auto()
+    LOOP_COND_DOWN          = auto()
+    LOOP_ENTRY_NORM         = auto()
+    LOOP_ENTRY_GAMMA        = auto()
+    LOOP_ENTRY_BETA         = auto()
+    LOOP_EXIT_GATE          = auto()
+    LOOP_INPUT_MIX          = auto()
+    STATE_UPDATE            = auto()
+    STATE_ALPHA             = auto()
+    LOOP_GAMMA              = auto()
+    LOOP_BETA               = auto()
+    LOOP_GATE               = auto()
+    LOOP_ADAPTER_GATE       = auto()
+    LOOP_ADAPTER_UP         = auto()
+    LOOP_ADAPTER_DOWN       = auto()
+
     TOKEN_EMBD           = auto()
     TOKEN_EMBD_NORM      = auto()
     MASKED_EMBD_CENTROIDS= auto()
@@ -1600,6 +1627,7 @@ MODEL_ARCH_NAMES: dict[MODEL_ARCH, str] = {
     MODEL_ARCH.K2HORIZON:        "k2-horizon",
     MODEL_ARCH.KOLIBRI1:         "kolibri1",
     MODEL_ARCH.LIMITE:           "limite",
+    MODEL_ARCH.KOI:              "koi",
 }
 
 VISION_PROJECTOR_TYPE_NAMES: dict[VISION_PROJECTOR_TYPE, str] = {
@@ -1616,6 +1644,22 @@ VISION_PROJECTOR_TYPE_NAMES: dict[VISION_PROJECTOR_TYPE, str] = {
 }
 
 TENSOR_NAMES: dict[MODEL_TENSOR, str] = {
+    MODEL_TENSOR.LOOP_COND_UP:              "loop_cond_up",
+    MODEL_TENSOR.LOOP_COND_DOWN:            "loop_cond_down",
+    MODEL_TENSOR.LOOP_ENTRY_NORM:           "loop_entry_norm",
+    MODEL_TENSOR.LOOP_ENTRY_GAMMA:          "loop_entry_gamma",
+    MODEL_TENSOR.LOOP_ENTRY_BETA:           "loop_entry_beta",
+    MODEL_TENSOR.LOOP_EXIT_GATE:            "loop_exit_gate",
+    MODEL_TENSOR.LOOP_INPUT_MIX:            "loop_input_mix",
+    MODEL_TENSOR.STATE_UPDATE:              "state_update",
+    MODEL_TENSOR.STATE_ALPHA:               "state_alpha",
+    MODEL_TENSOR.LOOP_GAMMA:                "blk.{bid}.loop_gamma",
+    MODEL_TENSOR.LOOP_BETA:                 "blk.{bid}.loop_beta",
+    MODEL_TENSOR.LOOP_GATE:                 "blk.{bid}.loop_gate",
+    MODEL_TENSOR.LOOP_ADAPTER_GATE:         "blk.{bid}.loop_adapter_gate",
+    MODEL_TENSOR.LOOP_ADAPTER_UP:           "blk.{bid}.loop_adapter_up",
+    MODEL_TENSOR.LOOP_ADAPTER_DOWN:         "blk.{bid}.loop_adapter_down",
+
     MODEL_TENSOR.TOKEN_EMBD:                "token_embd",
     MODEL_TENSOR.TOKEN_EMBD_NORM:           "token_embd_norm",
     MODEL_TENSOR.TOKEN_TYPES:               "token_types",
@@ -2283,6 +2327,41 @@ TENSOR_NAMES: dict[MODEL_TENSOR, str] = {
 }
 
 MODEL_TENSORS: dict[MODEL_ARCH, list[MODEL_TENSOR]] = {
+    MODEL_ARCH.KOI: [
+        MODEL_TENSOR.TOKEN_EMBD,
+        MODEL_TENSOR.OUTPUT_NORM,
+        MODEL_TENSOR.OUTPUT,
+        MODEL_TENSOR.ATTN_NORM,
+        MODEL_TENSOR.ATTN_Q,
+        MODEL_TENSOR.ATTN_K,
+        MODEL_TENSOR.ATTN_V,
+        MODEL_TENSOR.ATTN_OUT,
+        MODEL_TENSOR.ATTN_GATE,
+        MODEL_TENSOR.FFN_UP,
+        MODEL_TENSOR.FFN_DOWN,
+        MODEL_TENSOR.SSM_CONV1D,
+        MODEL_TENSOR.SSM_DT,
+        MODEL_TENSOR.SSM_ALPHA,
+        MODEL_TENSOR.SSM_BETA,
+        MODEL_TENSOR.SSM_NORM,
+        MODEL_TENSOR.SSM_OUT,
+        MODEL_TENSOR.SSM_A,
+        MODEL_TENSOR.LOOP_COND_UP,
+        MODEL_TENSOR.LOOP_COND_DOWN,
+        MODEL_TENSOR.LOOP_ENTRY_NORM,
+        MODEL_TENSOR.LOOP_ENTRY_GAMMA,
+        MODEL_TENSOR.LOOP_ENTRY_BETA,
+        MODEL_TENSOR.LOOP_EXIT_GATE,
+        MODEL_TENSOR.LOOP_INPUT_MIX,
+        MODEL_TENSOR.STATE_UPDATE,
+        MODEL_TENSOR.STATE_ALPHA,
+        MODEL_TENSOR.LOOP_GAMMA,
+        MODEL_TENSOR.LOOP_BETA,
+        MODEL_TENSOR.LOOP_GATE,
+        MODEL_TENSOR.LOOP_ADAPTER_GATE,
+        MODEL_TENSOR.LOOP_ADAPTER_UP,
+        MODEL_TENSOR.LOOP_ADAPTER_DOWN,
+    ],
     MODEL_ARCH.MMPROJ: [
         MODEL_TENSOR.V_MMPROJ,
         MODEL_TENSOR.V_MMPROJ_FC,
