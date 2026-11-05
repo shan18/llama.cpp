@@ -347,7 +347,8 @@ llama_context::llama_context(
 
     cparams.fused_gdn_ar = true;
     cparams.fused_gdn_ch = true;
-    cparams.auto_fgdn    = false;
+    // Probe rectangular GDN support so Koi can fall back to its unfused graph.
+    cparams.auto_fgdn    = model.arch == LLM_ARCH_KOI;
 
     cparams.fused_lid = true;
     cparams.auto_flid = false;

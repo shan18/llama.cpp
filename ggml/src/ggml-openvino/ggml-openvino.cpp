@@ -1654,6 +1654,9 @@ static ggml_openvino_op_support is_op_supported_case(const ggml_tensor * op) {
         break;
     }
     case GGML_OP_GATED_DELTA_NET: {
+        if (op->src[0]->ne[0] != op->src[2]->ne[0]) {
+            return {false, "GATED_DELTA_NET with unequal key/value widths is not supported"};
+        }
         // enable after https://github.com/openvinotoolkit/openvino/pull/35917 is included in OV release
         // return true;
         // if (ggml_openvino_is_gpu() && op->src[0]->ne[2] > 1) {

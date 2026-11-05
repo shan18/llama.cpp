@@ -306,7 +306,12 @@ ggml_tensor * llama_model_koi::graph::build_gdp(llm_graph_input_rs * inp, ggml_t
     auto * b = ggml_reshape_4d(ctx0, ggml_sigmoid(ctx0, build_lora_mm(l.ssm_beta, cur)), 1, hv, m*nt, ns);
     auto * state = ggml_reshape_4d(ctx0, build_rs(inp, state_all, hparams.n_embd_s(), ns), sk, sv, hv, ns);
     ggml_tensor * out = nullptr;
-    if (nt == 1) {
+    if (nt == 1 ? cparams.fused_gdn_ar : cparams.fused_gdn_ch) {
+        auto result = build_delta_net_fused(q, k, v, g, b, state, il, nt);
+        out = result.first;
+        state = result.second;
+        out = ggml_view_4d(ctx0, out, sv, hv, nt, ns, out->nb[1], m*out->nb[2], out->nb[3], (m - 1)*out->nb[2]);
+    } else if (nt == 1) {
         const auto step = [&](ggml_tensor * x, int64_t i) {
             return ggml_cont(ctx0, ggml_view_4d(ctx0, x, x->ne[0], x->ne[1], 1, ns, x->nb[1], x->nb[2], x->nb[3], i*x->nb[2]));
         };
