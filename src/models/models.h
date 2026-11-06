@@ -189,6 +189,7 @@ struct llama_model_koi : public llama_model_base {
     bool input_mixing = false;
     std::string pattern;
     std::vector<uint32_t> physical;
+    std::vector<uint32_t> cache_layer;
     std::vector<conditioning> cond;
     linear cond_up, cond_down, entry_gamma, entry_beta, exit_gate, input_mix, state_update;
     ggml_tensor * entry_norm = nullptr;

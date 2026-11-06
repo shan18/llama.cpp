@@ -23,12 +23,15 @@ void llama_model_koi::load_arch_hparams(llama_model_loader & ml) {
     ml.get_key(LLM_KV_SSM_HOUSEHOLDER_COUNT, hparams.ssm_n_householder);
     std::string cache_mode;
     ml.get_key(LLM_KV_RECURRENT_KV_CACHE_MODE, cache_mode);
+    if (cache_mode != "per_loop" && cache_mode != "last_loop") {
+        throw std::runtime_error("Koi recurrent_kv_cache_mode must be per_loop or last_loop");
+    }
 
     const uint64_t n_physical = uint64_t(n_input) + n_recurrent + n_output;
     const uint64_t n_virtual = uint64_t(n_input) + uint64_t(n_recurrent)*n_loops + n_output;
     if (!n_recurrent || !n_loops || !max_loops || n_virtual > LLAMA_MAX_LAYERS ||
             n_physical != hparams.n_layer_all || pattern.size() != n_physical ||
-            pattern.find_first_not_of("M*-") != std::string::npos || cache_mode != "per_loop" ||
+            pattern.find_first_not_of("M*-") != std::string::npos ||
             !n_cond || n_cond % 2 || n_cond > hparams.n_embd || adapter_rank > hparams.n_embd) {
         throw std::runtime_error("invalid Koi recurrence metadata");
     }
@@ -65,7 +68,11 @@ void llama_model_koi::load_arch_hparams(llama_model_loader & ml) {
     }
     hparams.n_layer_all = n_virtual;
     for (uint32_t il = 0; il < n_virtual; ++il) {
-        const char kind = pattern[physical[il]];
+        const uint32_t p = physical[il];
+        const char kind = pattern[p];
+        const bool recurrent_attn = kind == '*' && p >= n_input && p < n_input + n_recurrent;
+        // Only attention KV is shared across loops; GDP and convolution states remain per-loop.
+        cache_layer.push_back(recurrent_attn && cache_mode == "last_loop" ? p : il);
         hparams.n_head_arr[il] = nh;
         hparams.n_head_kv_arr[il] = kind == '*' ? nk : 0;
         hparams.n_ff_arr[il] = kind == '-' ? nf : 0;
@@ -242,7 +249,7 @@ ggml_tensor * llama_model_koi::graph::build_layer(llm_graph_input_mem_hybrid * i
             break;
         case '*': {
             auto [q, k, v] = build_qkv(l, cur, hparams.n_embd_head_k(), hparams.n_head(il), hparams.n_head_kv(il), il);
-            cur = build_attn(inp->get_attn(), l.wo, nullptr, nullptr, q, k, v, nullptr, nullptr, nullptr, 1.0f/sqrtf(hparams.n_embd_head_k()), il);
+            cur = build_attn(inp->get_attn(), l.wo, nullptr, nullptr, q, k, v, nullptr, nullptr, nullptr, 1.0f/sqrtf(hparams.n_embd_head_k()), model.cache_layer[il]);
         } break;
         case 'M':
             cur = build_gdp(inp->get_recr(), cur, il);

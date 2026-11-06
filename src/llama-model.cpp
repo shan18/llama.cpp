@@ -3256,6 +3256,9 @@ llama_memory_i * llama_model::create_memory(const llama_memory_params & params, 
                         filter_recr = [&](uint32_t) { return true; };
                     } else if (arch == LLM_ARCH_NEMOTRON_H || arch == LLM_ARCH_NEMOTRON_H_MOE || arch == LLM_ARCH_KOI) {
                         filter_attn = [&](uint32_t il) {
+                            if (arch == LLM_ARCH_KOI && static_cast<const llama_model_koi &>(*this).cache_layer[il] != il) {
+                                return false;
+                            }
                             return !hparams.is_recr(il) && hparams.n_ff(il) == 0;
                         };
                         filter_recr = [&](uint32_t il) {
